@@ -1,35 +1,80 @@
+#define MINPIN 2                // Pin 0 and 1 are RX/TX
+#define MAXPIN 12               // Stick to digital for now
+#define SHORT 50                // Short keypress, in 'ms'
+#define LONG 4500               // Long keypress, in 'ms'
+#define INPUTLEN 20             // Length of imputstring we parse
 
-String inputString = "";         // a string to hold incoming data
-boolean stringComplete = false;  // whether the string is complete
+char inputstring[INPUTLEN+1] = "";// a string to hold incoming data
+byte islen = 0;
+bool inputdone = false;
 
-// the setup routine runs once when you press reset:
-void setup() {
-  int i;
-  
-  // initialize serial communication at 9600 bits per second:
-  Serial.begin(115200);
-  Serial.write( "Initializing" );
-  inputString.reserve(200);
-
-  for( int i = 0; i < 14; i++)
+// Arduino PINS default to 'input' and 'LOW', but set them anyway
+// so we can call reset later to revert to defaults if needed.
+void setup()
+{
+  for( int i = MINPIN; i <= MAXPIN; i++)
   {
     pinMode(i, INPUT);
     digitalWrite(i, LOW);
   }
+  
+  // initialize serial communication at 9600 bits per second:
+  Serial.begin(115200);
+  Serial.write( "RemoteReset-Arduino started" );
+  inputstring[0] = '\0';          // Initialize to empty
+  inputstring[INPUTLEN+1] = '\0'; // Should never be overwritten
 }
 
 // the loop routine runs over and over again forever:
-void loop() {
-  int val;
-  
-  if (stringComplete) {
+void loop()
+{
+  // If we have a input to process, do so
+  if (inputdone) {
     processString();
-    Serial.println(inputString); 
+    Serial.println(inputstring); 
     // clear the string:
-    inputString = "";
-    stringComplete = false;
+    inputstring[0] = '\0';
+    islen=0;
+    inputdone = false;
   }
-  
+
+  if ( Serial.available() > 0)
+  {
+    char input = Serial.read();
+
+    // Newline / Carriage return close the input
+    if( ( input == '\n' ) || ( input == '\r' ) )
+    {
+      // Close input with \0
+      inputstring[islen++] = '\0';
+      inputdone=true;
+    }
+    else if( ( input >= ' ' ) && ( input <= 'z' ) )
+    {
+      // Add valid character, increment islen
+      inputstring[islen++] = input
+    }
+    else
+    {
+      Serial.print( "Ignoring character: " );
+      Serial.print( input, HEX );
+    }
+
+    // Have we reached max length, also close input and flush remainder
+    if( islen >= INPUTLEN )
+    {
+      inputstring[islen] = '\0';
+      inputdone=true;
+
+      // Flush remaining characters in input to /dev/zero
+      while( Serial.available() > 0 )
+      {
+        Serial.read();
+      }
+    }
+  }
+}
+
 /*  Serial.println( "Restart loop" );
   for( int i = 3; i < 14; i++ )
   {
@@ -62,27 +107,6 @@ void loop() {
   delay(1000);
   
   */
-}
-
-/*
-  SerialEvent occurs whenever a new data comes in the
- hardware serial RX.  This routine is run between each
- time loop() runs, so using delay inside loop can delay
- response.  Multiple bytes of data may be available.
- */
-void serialEvent() {
-  while (Serial.available()) {
-    // get the new byte:
-    char inChar = (char)Serial.read(); 
-    // add it to the inputString:
-    inputString += inChar;
-    // if the incoming character is a newline, set a flag
-    // so the main loop can do something about it:
-    if (inChar == '\n') {
-      stringComplete = true;
-    } 
-  }
-}
 
 void processString()
 {
@@ -102,4 +126,4 @@ void processString()
   {
     Serial.println( "Onbekend commando" );
   }
-} 
+}
