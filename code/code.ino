@@ -31,14 +31,13 @@ void loop()
   // If we have a input to process, do so
   if (inputdone) {
     processString();
-    Serial.println(inputstring); 
     // clear the string:
     inputstring[0] = '\0';
     islen=0;
     inputdone = false;
   }
 
-  if ( Serial.available() > 0)
+  if( Serial.available() > 0)
   {
     char input = Serial.read();
 
@@ -52,7 +51,7 @@ void loop()
     else if( ( input >= ' ' ) && ( input <= 'z' ) )
     {
       // Add valid character, increment islen
-      inputstring[islen++] = input
+      inputstring[islen++] = input;
     }
     else
     {
@@ -69,6 +68,7 @@ void loop()
       // Flush remaining characters in input to /dev/zero
       while( Serial.available() > 0 )
       {
+        // This doesn't seem to flush all input
         Serial.read();
       }
     }
@@ -111,19 +111,6 @@ void loop()
 void processString()
 {
   Serial.print( "Got a string: '" );
-  Serial.print( inputString );
-  Serial.print( "'" );
-  
-  if( inputString.startsWith("help") )
-  {
-    Serial.println( "Ik snap de volgende commando's: help reset power status." );
-  }
-  else if( inputString.startsWith("reset")  )
-  {
-     Serial.println( "Dat was een reset" );
-  }
-  else
-  {
-    Serial.println( "Onbekend commando" );
-  }
+  Serial.print( inputstring );
+  Serial.println( "'" );
 }
