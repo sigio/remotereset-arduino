@@ -1,10 +1,13 @@
+#include <string.h>
+
 #define MINPIN 2                // Pin 0 and 1 are RX/TX
 #define MAXPIN 12               // Stick to digital for now
 #define SHORT 50                // Short keypress, in 'ms'
 #define LONG 4500               // Long keypress, in 'ms'
 #define INPUTLEN 50             // Length of imputstring we parse
 
-char inputstring[INPUTLEN+1] = "";// a string to hold incoming data
+char * inputstring = (char *) malloc(INPUTLEN+1);
+char * isbegin = inputstring;
 byte islen = 0;
 bool inputdone = false;
 
@@ -23,6 +26,7 @@ void setup()
   Serial.print( "RemoteReset-Arduino started\n\r\n\r" );
   inputstring[0] = '\0';          // Initialize to empty
   inputstring[INPUTLEN+1] = '\0'; // Should never be overwritten
+  Serial.print( "\n> " );
 }
 
 // the loop routine runs over and over again forever:
@@ -35,6 +39,7 @@ void loop()
     inputstring[0] = '\0';
     islen=0;
     inputdone = false;
+    Serial.print( "\n> " );
   }
 
   if( Serial.available() > 0)
@@ -48,6 +53,8 @@ void loop()
       // Close input with \0
       inputstring[islen++] = '\0';
       inputdone=true;
+
+      Serial.print( "\n\r\n\r" );
     }
     else if( input == 127 )
     {
@@ -121,7 +128,38 @@ void loop()
 
 void processString()
 {
-  Serial.print( "Got a string: '" );
-  Serial.print( inputstring );
-  Serial.println( "'" );
+  char *p, *i;
+
+  p = strtok_r(inputstring," ",&i);
+  Serial.print(p);
+
+  if( ( strncmp( p, "help", 4 ) == 0 ) )
+  {
+    Serial.print( "Help: \n\r\
+  setup       Enter setup mode\n\r\
+  reset #     Toggle reset switch on pc number #\n\r\
+  power #     Toggle power switch on pc number #\n\r\
+  force #     Long-Press power switch on pc number #\n\r\
+  check       Check power status\n\r\
+\n\r\n\r" );
+  }
+  else if( ( strncmp( p, "setup", 5 ) == 0 ) )
+  {
+    Serial.print( "Setup: Used to configure the controller\n\r\n" );
+  }
+  else
+  {
+    Serial.print( "Unknown command: " );
+    Serial.print( p );
+    Serial.print( "\n\r\n\r" );
+  }
+
+  //  Second strtok iteration
+  /*
+  p = strtok_r(NULL," ",&i);
+  Serial.print(p);
+  Serial.println("");
+
+  Serial.println( "\n" );
+  */
 }
