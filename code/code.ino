@@ -2,7 +2,7 @@
 #define MAXPIN 12               // Stick to digital for now
 #define SHORT 50                // Short keypress, in 'ms'
 #define LONG 4500               // Long keypress, in 'ms'
-#define INPUTLEN 20             // Length of imputstring we parse
+#define INPUTLEN 50             // Length of imputstring we parse
 
 char inputstring[INPUTLEN+1] = "";// a string to hold incoming data
 byte islen = 0;
@@ -20,7 +20,7 @@ void setup()
   
   // initialize serial communication at 9600 bits per second:
   Serial.begin(115200);
-  Serial.write( "RemoteReset-Arduino started" );
+  Serial.print( "RemoteReset-Arduino started\n\r\n\r" );
   inputstring[0] = '\0';          // Initialize to empty
   inputstring[INPUTLEN+1] = '\0'; // Should never be overwritten
 }
@@ -40,6 +40,7 @@ void loop()
   if( Serial.available() > 0)
   {
     char input = Serial.read();
+    Serial.print(input);
 
     // Newline / Carriage return close the input
     if( ( input == '\n' ) || ( input == '\r' ) )
@@ -48,6 +49,15 @@ void loop()
       inputstring[islen++] = '\0';
       inputdone=true;
     }
+    else if( input == 127 )
+    {
+      // Backspace
+      if ( islen >= 1 )
+      {
+        Serial.print( "\b \b" );
+        inputstring[islen--] = '\0';
+      }
+    }
     else if( ( input >= ' ' ) && ( input <= 'z' ) )
     {
       // Add valid character, increment islen
@@ -55,8 +65,9 @@ void loop()
     }
     else
     {
-      Serial.print( "Ignoring character: " );
+      Serial.print( "Illegal character: '" );
       Serial.print( input, HEX );
+      Serial.print( "'\n" );
     }
 
     // Have we reached max length, also close input and flush remainder
