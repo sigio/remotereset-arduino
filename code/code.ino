@@ -125,14 +125,83 @@ void toggle_pin( byte pin, int ms )
 {
   pinMode( pin, OUTPUT );
   digitalWrite(pin, LOW);
-  delay( ms )
+  delay( ms );
   pinMode(pin, INPUT);
   digitalWrite(pin, LOW);
 }
 
-bool status_pin( byte pin )
+void do_reset( byte cnum )
 {
-  return digitalRead(pin);
+  if( config[cnum].used )
+  {
+    Serial.print( "Sending reset signal to pin: " );
+    Serial.println( config[cnum].resetpin );
+    toggle_pin( config[cnum].resetpin, SHORT );
+  }
+  else
+  {
+    Serial.print( "Config invalid" );
+  }
+}
+
+void do_power( byte cnum )
+{
+  if( config[cnum].used )
+  {
+    Serial.print( "Sending power signal to pin: " );
+    Serial.println( config[cnum].powerpin );
+    toggle_pin( config[cnum].powerpin, SHORT );
+  }
+  else
+  {
+    Serial.print( "Config invalid" );
+  }
+}
+
+void do_force( byte cnum )
+{
+  if( config[cnum].used )
+  {
+    Serial.print( "Sending long power signal to pin: " );
+    Serial.println( config[cnum].powerpin );
+    toggle_pin( config[cnum].powerpin, LONG );
+  }
+  else
+  {
+    Serial.print( "Config invalid" );
+  }
+}
+
+void do_state( byte cnum )
+{
+  if( config[cnum].used )
+  {
+    bool power, state;
+    power = digitalRead( config[cnum].powerpin );
+    state = digitalRead( config[cnum].resetpin );
+
+    Serial.print( "System " );
+    Serial.print( config[cnum].name );
+    Serial.print( " has " );
+    if ( ! power )
+    {
+      Serial.print( "NO " );
+    }
+    Serial.print( "ATX power." );
+
+    if ( state )
+    {
+      Serial.println( " It seems to be powered on." );
+    }
+    else
+    {
+      Serial.println( " It seems to be off." );
+    }
+  }
+  else
+  {
+    Serial.print( "Config invalid" );
+  }
 }
 
 void do_load()
@@ -152,6 +221,7 @@ void do_erase( byte confignum )
   config[confignum].powerpin = 255;
   strncpy( config[confignum].name, "unused", NAMELEN );
 }
+
 
 void do_dump()
 {
@@ -189,7 +259,7 @@ void do_help()
   power #     Toggle power switch on config #\n\r\
   force #     Long-Press power switch on pc number #\n\r\
   erase #     Erase config number #\n\r\
-  check       Check power status\n\r\
+  state       Check power state\n\r\
   dump        Dump configuration to serial\n\r\
   save        Save configuration to EEPROM\n\r\
   load        Load configuration from EEPROM\n\r\
@@ -260,9 +330,25 @@ void processString()
     }
     else
     {
+      if( ( strncmp( cmd, "reset", 5 ) == 0 ) )
+      {
+          do_reset( cnum );
+      }
+      if( ( strncmp( cmd, "power", 5 ) == 0 ) )
+      {
+          do_power( cnum );
+      }
+      if( ( strncmp( cmd, "force", 5 ) == 0 ) )
+      {
+          do_force( cnum );
+      }
       if( ( strncmp( cmd, "erase", 5 ) == 0 ) )
       {
           do_erase( cnum );
+      }
+      if( ( strncmp( cmd, "state", 5 ) == 0 ) )
+      {
+          do_state( cnum );
       }
       else if( ( strncmp( cmd, "config", 6 ) == 0 ) )
       {
