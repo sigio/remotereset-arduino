@@ -121,38 +121,19 @@ void loop()
   }
 }
 
-/*  Serial.println( "Restart loop" );
-  for( int i = 3; i < 14; i++ )
-  {
-     val = digitalRead(i);
-     Serial.print( "Pin " );
-     Serial.print( i, DEC );
-     Serial.print( " is currently " );
-     Serial.println( val, DEC );
-  }
-  if ( Serial.available() PROMPT> 0 )
-  {
-     int inbyte = Serial.read();
-     if (( inbyte >= '0' ) && ( inbyte <= '9' ))
-     {
-       int port = inbyte - '0';
-       Serial.print( "Toggling pin " );
-       Serial.print( port );
-       Serial.println( " to output for 500ms" );
-       pinMode(port, OUTPUT);
-       digitalWrite(port, LOW);
-       delay(500);
-       pinMode(port, INPUT);
-       digitalWrite(port, LOW);
-     }
-     else
-     {
-       Serial.println( "Incorrect input" );
-     }
-  }
-  delay(1000);
-  
-  */
+void toggle_pin( byte pin, int ms )
+{
+  pinMode( pin, OUTPUT );
+  digitalWrite(pin, LOW);
+  delay( ms )
+  pinMode(pin, INPUT);
+  digitalWrite(pin, LOW);
+}
+
+bool status_pin( byte pin )
+{
+  return digitalRead(pin);
+}
 
 void do_load()
 {
