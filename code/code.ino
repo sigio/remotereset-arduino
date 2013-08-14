@@ -334,19 +334,19 @@ void processString()
       {
           do_reset( cnum );
       }
-      if( ( strncmp( cmd, "power", 5 ) == 0 ) )
+      else if( ( strncmp( cmd, "power", 5 ) == 0 ) )
       {
           do_power( cnum );
       }
-      if( ( strncmp( cmd, "force", 5 ) == 0 ) )
+      else if( ( strncmp( cmd, "force", 5 ) == 0 ) )
       {
           do_force( cnum );
       }
-      if( ( strncmp( cmd, "erase", 5 ) == 0 ) )
+      else if( ( strncmp( cmd, "erase", 5 ) == 0 ) )
       {
           do_erase( cnum );
       }
-      if( ( strncmp( cmd, "state", 5 ) == 0 ) )
+      else if( ( strncmp( cmd, "state", 5 ) == 0 ) )
       {
           do_state( cnum );
       }
