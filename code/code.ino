@@ -9,6 +9,7 @@
 #define INPUTLEN 50             // Length of imputstring we parse
 #define NAMELEN 10              // Length of a host/config name
 #define CONFIGS 8               // Amount of configs to store
+#define PROMPT "\n> "
 
 
 // Function declarations
@@ -42,16 +43,16 @@ void setup()
   Serial.begin(115200);
   Serial.print( "RemoteReset-Arduino started\n\r" );
 
-  // Debug
+  /*
   int i = sizeof(config);
   Serial.print( "Configuration is " );
   Serial.print( i, DEC );
   Serial.print( " bytes\n\r\n\r" );
-  // End Debug
+  */
 
   inputstring[0] = '\0';          // Initialize to empty
   inputstring[INPUTLEN+1] = '\0'; // Should never be overwritten
-  Serial.print( "\n> " );
+  Serial.print( PROMPT );
 
   EEPROM_readAnything(0, config);
 }
@@ -66,7 +67,7 @@ void loop()
     inputstring[0] = '\0';
     islen=0;
     inputdone = false;
-    Serial.print( "\n> " );
+    Serial.print( PROMPT );
   }
 
   if( Serial.available() > 0)
@@ -129,7 +130,7 @@ void loop()
      Serial.print( " is currently " );
      Serial.println( val, DEC );
   }
-  if ( Serial.available() > 0 )
+  if ( Serial.available() PROMPT> 0 )
   {
      int inbyte = Serial.read();
      if (( inbyte >= '0' ) && ( inbyte <= '9' ))
@@ -173,7 +174,7 @@ void do_erase( byte confignum )
 
 void do_dump()
 {
-  Serial.print( "Config dump\n\r" );
+  Serial.print( "\rConfig\n\r" );
   for( byte i = 0; i < CONFIGS; i++ )
   {
     Serial.print( "Config: " );
@@ -203,14 +204,15 @@ void do_help()
   Serial.print( "Help: \n\r\
   config      Edit configuration\n\r\
     config [0-7] resetpin pwrpin name\n\r\
-  reset #     Toggle reset switch on pc number #\n\r\
-  power #     Toggle power switch on pc number #\n\r\
+  reset #     Toggle reset switch on config #\n\r\
+  power #     Toggle power switch on config #\n\r\
   force #     Long-Press power switch on pc number #\n\r\
   erase #     Erase config number #\n\r\
   check       Check power status\n\r\
   dump        Dump configuration to serial\n\r\
   save        Save configuration to EEPROM\n\r\
   load        Load configuration from EEPROM\n\r\
+  wipe        Wipe onfiguration and update EEPROM\n\r\
 \n\r\n\r" );
 }
 
@@ -240,8 +242,9 @@ void processString()
   char *cmd, *save;
 
   cmd = strtok_r(inputstring," ",&save);
-  Serial.print(cmd);
+  //Serial.print(cmd);
 
+  // Simple commands without arguments
   if( ( strncmp( cmd, "help", 4 ) == 0 ) )
   {
     do_help();
@@ -262,51 +265,52 @@ void processString()
   {
     do_wipe();
   }
-  else if( ( strncmp( cmd, "erase", 5 ) == 0 ) )
-  {
+  else
+  { 
+    // Commands with at least 1 argument
     char * confignum;
     byte cnum;
     confignum = strtok_r( NULL, " ", &save );
     cnum = (byte) atoi(confignum);
 
-    if( ( cnum >= 0 ) && ( cnum < CONFIGS ) )
+    if( ! ( cnum >= 0 ) && ( cnum < CONFIGS ) )
     {
-      do_erase( cnum );
+      Serial.println( "Invalid config number\n\r" );
     }
     else
     {
-      Serial.println( "Invalid config to erase\n\r" );
+      if( ( strncmp( cmd, "erase", 5 ) == 0 ) )
+      {
+          do_erase( cnum );
+      }
+      else if( ( strncmp( cmd, "config", 6 ) == 0 ) )
+      {
+        char *resetpin, *pwrpin, *name;
+
+        resetpin = strtok_r( NULL, " ", &save );
+        pwrpin = strtok_r( NULL, " ", &save );
+        name = strtok_r( NULL, " ", &save );
+
+        if ( resetpin && pwrpin && name )
+        {
+         byte rspin, ppin;
+         rspin = atoi( resetpin );
+         ppin = atoi( pwrpin );
+
+         do_config( cnum, rspin, ppin, name);
+        }
+        else
+        {
+          Serial.print( "ERROR: Please specify configuration number, resetpin, pwrpin and a name\n\r\n\r" );
+        }
+      }
+      else
+      {
+      Serial.print( "Unknown command: " );
+      Serial.print( cmd );
+      Serial.print( "\n\r\n\r" );
+      }
     }
-  }
-  else if( ( strncmp( cmd, "config", 6 ) == 0 ) )
-  {
-    char * confignum, *resetpin, *pwrpin, *name;
-
-    confignum = strtok_r( NULL, " ", &save );
-    resetpin = strtok_r( NULL, " ", &save );
-    pwrpin = strtok_r( NULL, " ", &save );
-    name = strtok_r( NULL, " ", &save );
-
-
-    if ( confignum && resetpin && pwrpin && name )
-    {
-      byte rspin, ppin, cnum;
-      cnum = atoi( confignum );
-      rspin = atoi( resetpin );
-      ppin = atoi( pwrpin );
-
-      do_config( cnum, rspin, ppin, name);
-    }
-    else
-    {
-      Serial.print( "ERROR: Please specify configuration number, resetpin, pwrpin and a name\n\r\n\r" );
-    }
-  }
-  else
-  {
-    Serial.print( "Unknown command: " );
-    Serial.print( cmd );
-    Serial.print( "\n\r\n\r" );
   }
 }
 
