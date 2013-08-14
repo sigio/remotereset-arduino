@@ -17,15 +17,16 @@ will either stop (shutdown) or start the system.
 Easiest is to attach the arduino (nano is my preferred platform) to
 a USB port on another box (OpenWRT, other pc, etc).
 
-Goals
+Done
 -----
 
 * Connecting to the serial port should NOT trigger any resets or boots
 * Resetting the arduino should not trigger any resets or boots
-* Hosts can be defined with a name, and pinnumbers for reset and pwrbtn
-* Command to query poweron status of a host / hosts
+* Hosts can be defined with a name, and pinnumbers for reset and power
+* Command to query poweron status of a host / hosts (state)
 * Commands to trigger reset or power
 * Online help
+* Configuration stored in eeprom, commands to change/update/delete config
 
 Later
 -----
@@ -33,7 +34,6 @@ Later
 * Login with a password
 * Logout command / Logout after a timeout
 * Ethernet support
-* Configuration stored in eeprom, commands to change/update/delete config
 * Configurable short/long pulse times
 
 Schematic
