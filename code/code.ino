@@ -4,7 +4,7 @@
 
 #define MINPIN 2                // Pin 0 and 1 are RX/TX
 #define MAXPIN 12               // Stick to digital for now
-#define SHORT 50                // Short keypress, in 'ms'
+#define SHORT 250               // Short keypress, in 'ms'
 #define LONG 4500               // Long keypress, in 'ms'
 #define INPUTLEN 50             // Length of imputstring we parse
 #define NAMELEN 10              // Length of a host/config name
