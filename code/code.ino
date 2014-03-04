@@ -174,6 +174,8 @@ void do_force( byte cnum )
   {
     Serial.print( "Sending long power signal to pin: " );
     Serial.println( config[cnum].powerpin );
+    Serial.print( " For: " );
+    Serial.println( config[cnum].longpulse );
     toggle_pin( config[cnum].powerpin, config[cnum].longpulse );
   }
   else
