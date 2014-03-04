@@ -1,4 +1,4 @@
-RemoteReset-Arduino
+RemoteReset-Arduino, enhanced by eXtremeSHOK
 -------------------
 
 Arduino sketch to toggle reset and powerbuttons on standard ATX
@@ -28,13 +28,25 @@ Done
 * Online help
 * Configuration stored in eeprom, commands to change/update/delete config
 
+eXtremeSHOK
+-----
+* Configurable short/long pulse times
+* Toggle reset switch on All configs (resetall)
+* Toggle power switch on All configs (powerall)
+* Long-Press power switch on All configs (forceall)
+* Erase All configs (eraseall)
+* Check All Power state ( status )( stateall )
+* Enable csv output for prasing of status ( status 1 )
+* Power OFF machines which are on  ( poweroffon )
+* Power ON Machines which are off ( poweronoff )
+
 Later
 -----
 
 * Login with a password
 * Logout command / Logout after a timeout
 * Ethernet support
-* Configurable short/long pulse times
+
 
 Schematic
 ---------
