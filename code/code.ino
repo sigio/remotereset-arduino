@@ -1,3 +1,11 @@
+//# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+//# remotereset-arduino
+//# Version 2.0
+//# 03 March 2014
+//# Copyright (c) Adrian Jon Kriel : root-at-extremecooling-dot-org
+//# eXtremeSHOK :: https://eXtremeSHOK.com
+//# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
 #include <string.h>
 #include <EEPROM.h>
 #include "EEPROMAnything.h"
@@ -27,6 +35,8 @@ struct configdata
   byte  resetpin;
   byte  powerpin;
   char  name[NAMELEN];
+  byte  shortpulse;
+  byte  longpulse;
 } config[CONFIGS];
 
 // Arduino PINS default to 'input' and 'LOW', but set them anyway
@@ -136,7 +146,7 @@ void do_reset( byte cnum )
   {
     Serial.print( "Sending reset signal to pin: " );
     Serial.println( config[cnum].resetpin );
-    toggle_pin( config[cnum].resetpin, SHORT );
+    toggle_pin( config[cnum].resetpin, config[cnum].shortpulse );
   }
   else
   {
@@ -150,7 +160,7 @@ void do_power( byte cnum )
   {
     Serial.print( "Sending power signal to pin: " );
     Serial.println( config[cnum].powerpin );
-    toggle_pin( config[cnum].powerpin, SHORT );
+    toggle_pin( config[cnum].powerpin, config[cnum].longpulse );
   }
   else
   {
@@ -164,7 +174,7 @@ void do_force( byte cnum )
   {
     Serial.print( "Sending long power signal to pin: " );
     Serial.println( config[cnum].powerpin );
-    toggle_pin( config[cnum].powerpin, LONG );
+    toggle_pin( config[cnum].powerpin, config[cnum].longpulse );
   }
   else
   {
@@ -172,7 +182,7 @@ void do_force( byte cnum )
   }
 }
 
-void do_state( byte cnum )
+void do_state( byte cnum, int type = 0 )
 {
   if( config[cnum].used )
   {
@@ -180,27 +190,147 @@ void do_state( byte cnum )
     power = digitalRead( config[cnum].powerpin );
     state = digitalRead( config[cnum].resetpin );
 
-    Serial.print( "System " );
-    Serial.print( config[cnum].name );
-    Serial.print( " has " );
-    if ( ! power )
-    {
-      Serial.print( "NO " );
-    }
-    Serial.print( "ATX power." );
-
-    if ( state )
-    {
-      Serial.println( " It seems to be powered on." );
-    }
-    else
-    {
-      Serial.println( " It seems to be off." );
+    if( type == 1 ){ 
+      //csv
+      Serial.print( cnum );
+      Serial.print( "," );
+      Serial.print( config[cnum].name );
+      Serial.print( "," );
+      if ( power )
+      {
+        Serial.print( "power_on," );
+      }
+      else
+      {
+          Serial.print( "power_off," );  
+      }
+      if ( state )
+      {
+        Serial.println( "state_on" );
+      }
+      else
+      {
+        Serial.println( "state_off" );
+      }
+    }else{
+      Serial.print( "System " );
+      Serial.print( config[cnum].name );
+      Serial.print( " has " );
+      if ( ! power )
+      {
+        Serial.print( "NO " );
+      }
+      Serial.print( "ATX power." );
+  
+      if ( state )
+      {
+        Serial.println( " It seems to be powered on." );
+      }
+      else
+      {
+        Serial.println( " It seems to be off." );
+      }
     }
   }
   else
   {
     Serial.print( "Config invalid" );
+  }
+}
+
+void do_poweroffon()
+{
+  bool power, state;
+  for( byte i = 0; i < CONFIGS; i++ )
+  {
+    if((config[i].name != "unused")&&(config[i].used != 0))
+    {
+     power = digitalRead( config[i].powerpin );
+     state = digitalRead( config[i].resetpin );
+     if(power) //machine has power
+     {
+       if(state) //currently on
+       {
+         do_power( i ); //switch off
+       }
+     }
+   }
+  }
+}
+
+void do_poweronoff()
+{
+  bool power, state;
+  for( byte i = 0; i < CONFIGS; i++ )
+  {
+    if((config[i].name != "unused")&&(config[i].used != 0))
+    {
+     power = digitalRead( config[i].powerpin );
+     state = digitalRead( config[i].resetpin );
+     if(power) //machine has power
+     {
+       if(!state) //currently off
+       {
+         do_power( i ); //switch on
+       }
+     }
+   }
+  }
+}
+
+
+void do_powerall()
+{
+  for( byte i = 0; i < CONFIGS; i++ )
+  {
+    if((config[i].name != "unused")&&(config[i].used != 0)){
+      do_power( i );
+    }
+  }
+}
+
+void do_resetall()
+{
+  for( byte i = 0; i < CONFIGS; i++ )
+  {
+    if((config[i].name != "unused")&&(config[i].used != 0)){
+      do_reset( i );
+    }
+  }
+}
+
+void do_forceall()
+{
+  for( byte i = 0; i < CONFIGS; i++ )
+  {
+    if((config[i].name != "unused")&&(config[i].used != 0)){
+      do_force( i );
+    }
+  }
+}
+
+void do_eraseall()
+{
+  for( byte i = 0; i < CONFIGS; i++ )
+  {
+    if((config[i].name != "unused")&&(config[i].used != 0)){
+      do_erase( i );
+    }
+  }
+}
+
+void do_status( int type = 0 )
+{
+  if( type == 1 ){
+    //Serial.print( "\rCSV\n\r" );
+  }else{
+    Serial.print( "\rStatus\n\r" );
+  }
+  for( byte i = 0; i < CONFIGS; i++ )
+  {
+    if((config[i].name != "unused")&&(config[i].used != 0)){
+      do_state( i ,type );
+    }
   }
 }
 
@@ -219,9 +349,10 @@ void do_erase( byte confignum )
   config[confignum].used = false;
   config[confignum].resetpin = 255;
   config[confignum].powerpin = 255;
+  config[confignum].shortpulse = 0;
+  config[confignum].longpulse = 0;
   strncpy( config[confignum].name, "unused", NAMELEN );
 }
-
 
 void do_dump()
 {
@@ -253,32 +384,55 @@ void do_wipe()
 void do_help()
 {
   Serial.print( "Help: \n\r\
-  config      Edit configuration\n\r\
-    config [0-7] resetpin pwrpin name\n\r\
+  ------ eXtremeSHOK ------\n\r\
   reset #     Toggle reset switch on config #\n\r\
   power #     Toggle power switch on config #\n\r\
   force #     Long-Press power switch on pc number #\n\r\
   erase #     Erase config number #\n\r\
-  state       Check power state\n\r\
+  state #     Check power state on pc number #\n\r\
+  resetall    Toggle reset switch on All configs\n\r\
+  powerall    Toggle power switch on All configs\n\r\
+  forceall    Long-Press power switch on All configs\n\r\
+  eraseall    Erase All configs\n\r\
+  status      Check All Power state ( stateall ) \n\r\
+  poweroffon Power OFF machines which are on  \n\r\
+  poweronoff Power ON Machines which are off  \n\r\
+  ------\n\r\
+  config      Edit configuration\n\r\
+  config [0-7] resetpin pwrpin name\n\r\
+  config [0-7] resetpin pwrpin name shortpulse longpulse\n\r\ 
+               shortpulse = reset, default 4500ms\n\r\ 
+               longpulse = shutdown, default 250ms\n\r\ 
+  ------\n\r\
   dump        Dump configuration to serial\n\r\
   save        Save configuration to EEPROM\n\r\
   load        Load configuration from EEPROM\n\r\
   wipe        Wipe onfiguration and update EEPROM\n\r\
+  ------ eXtremeSHOK ------\n\r\
 \n\r\n\r" );
 }
 
-bool do_config( byte cnum, byte rspin, byte ppin, char * name)
+bool do_config( byte cnum, byte rspin, byte ppin, char * name, byte spulse = 0, byte lpulse = 0)
 {
       byte namelen = strnlen( name, NAMELEN +2 );
       if( ( cnum >= 0 ) && ( cnum < CONFIGS ) && ( rspin != ppin ) &&
         ( rspin >= MINPIN ) && ( rspin <= MAXPIN ) &&
         ( ppin >= MINPIN ) && ( ppin <= MAXPIN ) && ( namelen < NAMELEN ) )
       {
+        if( spulse <= 0 ){
+         spulse = SHORT;
+        }
+        if( lpulse <= 0 ){
+         lpulse = LONG;
+        } 
+        
         Serial.print( "Do_CONFIG\n\r" );
         config[cnum].used = true;
         config[cnum].resetpin = rspin;
         config[cnum].powerpin = ppin;
-        strncpy( config[cnum].name, name, NAMELEN );
+        config[cnum].shortpulse = spulse;
+        config[cnum].longpulse = lpulse;
+        strncpy( config[cnum].name, name, NAMELEN);
         return true;
       }
       else
@@ -293,7 +447,10 @@ void processString()
   char *cmd, *save;
 
   cmd = strtok_r(inputstring," ",&save);
-  //Serial.print(cmd);
+  //Serial.print("\nCMD:");
+  //Serial.println( cmd );
+  //Serial.print("\nSAVE: ");
+  //Serial.println( save );
 
   // Simple commands without arguments
   if( ( strncmp( cmd, "help", 4 ) == 0 ) )
@@ -327,10 +484,43 @@ void processString()
     if( ! ( cnum >= 0 ) && ( cnum < CONFIGS ) )
     {
       Serial.println( "Invalid config number\n\r" );
+      do_help();
     }
     else
     {
-      if( ( strncmp( cmd, "reset", 5 ) == 0 ) )
+      if( ( strncmp( cmd, "poweroffon", 10 ) == 0 ) )
+      {
+          do_poweroffon();
+      }
+      else if( ( strncmp( cmd, "poweronoff", 10 ) == 0 ) )
+      {
+          do_poweronoff();
+      }
+      else if( ( strncmp( cmd, "resetall", 8 ) == 0 ) )
+      {
+          do_resetall();
+      }
+      else if( ( strncmp( cmd, "powerall", 8 ) == 0 ) )
+      {
+          do_powerall();
+      }
+      else if( ( strncmp( cmd, "forceall", 8 ) == 0 ) )
+      {
+          do_forceall();
+      }
+      else if( ( strncmp( cmd, "eraseall", 8 ) == 0 ) )
+      {
+          do_eraseall();
+      }
+      else if( ( strncmp( cmd, "status", 6 ) == 0 ) )
+      {
+          do_status( int(cnum) );
+      }
+      else if( ( strncmp( cmd, "stateall", 8 ) == 0 ) )
+      {
+          do_status( int(cnum) );
+      }
+      else if( ( strncmp( cmd, "reset", 5 ) == 0 ) )
       {
           do_reset( cnum );
       }
@@ -352,19 +542,28 @@ void processString()
       }
       else if( ( strncmp( cmd, "config", 6 ) == 0 ) )
       {
-        char *resetpin, *pwrpin, *name;
+        char *resetpin, *pwrpin, *name, *shortpulse, *longpulse;
 
         resetpin = strtok_r( NULL, " ", &save );
         pwrpin = strtok_r( NULL, " ", &save );
         name = strtok_r( NULL, " ", &save );
+        shortpulse = strtok_r( NULL, " ", &save );
+        longpulse = strtok_r( NULL, " ", &save );
 
         if ( resetpin && pwrpin && name )
         {
          byte rspin, ppin;
          rspin = atoi( resetpin );
          ppin = atoi( pwrpin );
-
-         do_config( cnum, rspin, ppin, name);
+         
+         if( shortpulse && longpulse ){
+            byte spulse, lpulse; 
+            spulse = atoi( shortpulse );
+            lpulse = atoi( longpulse );
+            do_config( cnum, rspin, ppin, name, spulse, lpulse);
+         }else{
+            do_config( cnum, rspin, ppin, name);
+         }
         }
         else
         {
@@ -380,4 +579,3 @@ void processString()
     }
   }
 }
-
